@@ -6,7 +6,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
+
+	"github.com/gorilla/mux"
 )
 
 type Client struct {
@@ -27,9 +28,10 @@ func returnAllClients(w http.ResponseWriter, r *http.Request) {
 
 func getClient(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL.Path)
-	key := strings.Split(r.URL.Path, "/")[2]
 
-	id, err := strconv.Atoi(key)
+	vars := mux.Vars(r)
+
+	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
 		panic(err)
 	}
@@ -42,10 +44,11 @@ func getClient(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleRequests() {
-	http.HandleFunc("/clients", returnAllClients)
-	http.HandleFunc("/client/", getClient)
-	http.HandleFunc("/", home)
-	http.ListenAndServe("localhost:8000", nil)
+	router := mux.NewRouter().StrictSlash(true)
+	router.HandleFunc("/clients", returnAllClients)
+	router.HandleFunc("/client/{id}", getClient)
+	router.HandleFunc("/", home)
+	http.ListenAndServe("localhost:8000", router)
 }
 
 func main() {
